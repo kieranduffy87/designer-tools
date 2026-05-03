@@ -1,13 +1,14 @@
 import { useState, useRef, useCallback, useId } from 'react'
 
 // Sample images bundled as remote URLs (Unsplash). The user can also upload.
+// High-res sources so the displaced output stays sharp at large render sizes.
 const SAMPLES = [
-  { key: 'building', label: 'Building', url: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=900&q=80' },
-  { key: 'flower',   label: 'Flower',   url: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=900&q=80' },
-  { key: 'beach',    label: 'Beach',    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900&q=80' },
-  { key: 'mountain', label: 'Mountain', url: 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=900&q=80' },
-  { key: 'forest',   label: 'Forest',   url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=900&q=80' },
-  { key: 'city',     label: 'City',     url: 'https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=900&q=80' },
+  { key: 'building', label: 'Building', url: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=2000&q=92', thumb: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=200&q=70' },
+  { key: 'flower',   label: 'Flower',   url: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=2000&q=92', thumb: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=200&q=70' },
+  { key: 'beach',    label: 'Beach',    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=2000&q=92', thumb: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&q=70' },
+  { key: 'mountain', label: 'Mountain', url: 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=2000&q=92', thumb: 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=200&q=70' },
+  { key: 'forest',   label: 'Forest',   url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=2000&q=92', thumb: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&q=70' },
+  { key: 'city',     label: 'City',     url: 'https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=2000&q=92', thumb: 'https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=200&q=70' },
 ]
 
 // Direction presets
@@ -40,11 +41,15 @@ export default function FractalGlass({ narrow }) {
   const sample = SAMPLES.find(s => s.key === sampleKey) || SAMPLES[0]
   const imageHref = uploadedImage || sample.url
 
-  // viewBox is 800x600. We want roughly `steps` visible bands across that axis.
-  // For vertical mode bands run along X (so freqX > 0, freqY = 0).
+  // viewBox is 1600x1200 (2x of the 800x600 we used to use) so the filter
+  // operates at higher resolution → sharper bands and crisper imagery.
+  // We want roughly `steps` visible bands across the band axis.
   const isVertical = typeKey === 'vertical'
-  const freq = (steps / 800).toFixed(5)
+  const freq = (steps / 1600).toFixed(6)
   const baseFreq = isVertical ? `${freq} 0` : `0 ${freq}`
+  // Displacement scale lives in user-space; double it so the slider value
+  // stays visually equivalent to the previous 800x600 coordinate system.
+  const displacementScale = distortion * 2
 
   const onUpload = useCallback((e) => {
     const file = e.target.files?.[0]
@@ -82,8 +87,8 @@ export default function FractalGlass({ narrow }) {
       }
       const cloned = svg.cloneNode(true)
       cloned.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-      cloned.setAttribute('width', '1600')
-      cloned.setAttribute('height', '1200')
+      cloned.setAttribute('width', '2400')
+      cloned.setAttribute('height', '1800')
       const imgEl = cloned.querySelector('image')
       if (imgEl) imgEl.setAttribute('href', dataHref)
 
@@ -95,9 +100,11 @@ export default function FractalGlass({ narrow }) {
       img.crossOrigin = 'anonymous'
       img.onload = () => {
         const canvas = document.createElement('canvas')
-        canvas.width = 1600; canvas.height = 1200
+        canvas.width = 2400; canvas.height = 1800
         const ctx = canvas.getContext('2d')
-        ctx.drawImage(img, 0, 0, 1600, 1200)
+        ctx.imageSmoothingEnabled = true
+        ctx.imageSmoothingQuality = 'high'
+        ctx.drawImage(img, 0, 0, 2400, 1800)
         canvas.toBlob(b => {
           const dl = URL.createObjectURL(b)
           const a = document.createElement('a')
@@ -133,10 +140,12 @@ export default function FractalGlass({ narrow }) {
           boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
           background: '#0b0b0f',
         }}>
-          <svg ref={svgRef} viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice"
-            style={{ display: 'block', width: '100%', height: '100%' }}>
+          <svg ref={svgRef} viewBox="0 0 1600 1200" preserveAspectRatio="xMidYMid slice"
+            style={{ display: 'block', width: '100%', height: '100%', imageRendering: 'auto' }}>
             <defs>
-              <filter id={filterId} x="-10%" y="-10%" width="120%" height="120%">
+              <filter id={filterId} x="-5%" y="-5%" width="110%" height="110%"
+                filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse"
+                colorInterpolationFilters="sRGB">
                 <feTurbulence type="fractalNoise" baseFrequency={baseFreq} numOctaves="1" seed="3" result="noise" />
                 {/* Quantise R into N steps; force G to constant 0.5 so the
                     other axis has zero displacement. */}
@@ -147,7 +156,7 @@ export default function FractalGlass({ narrow }) {
                   <feFuncA type="discrete" tableValues="1" />
                 </feComponentTransfer>
                 <feDisplacementMap in="SourceGraphic" in2="stepped"
-                  scale={distortion}
+                  scale={displacementScale}
                   xChannelSelector={isVertical ? 'G' : 'R'}
                   yChannelSelector={isVertical ? 'R' : 'G'}
                   result="displaced" />
@@ -156,10 +165,10 @@ export default function FractalGlass({ narrow }) {
             </defs>
 
             {showOriginal ? (
-              <image href={imageHref} x="0" y="0" width="800" height="600" preserveAspectRatio="xMidYMid slice" crossOrigin="anonymous" />
+              <image href={imageHref} x="0" y="0" width="1600" height="1200" preserveAspectRatio="xMidYMid slice" crossOrigin="anonymous" />
             ) : (
               <g filter={`url(#${filterId})`}>
-                <image href={imageHref} x="0" y="0" width="800" height="600" preserveAspectRatio="xMidYMid slice" crossOrigin="anonymous" />
+                <image href={imageHref} x="0" y="0" width="1600" height="1200" preserveAspectRatio="xMidYMid slice" crossOrigin="anonymous" />
               </g>
             )}
           </svg>
@@ -219,7 +228,7 @@ export default function FractalGlass({ narrow }) {
                   border: `2px solid ${active ? '#0339f8' : 'rgba(255,255,255,0.08)'}`,
                   background: '#0b0b0f', cursor: 'pointer', transition: 'border-color 0.15s',
                 }}>
-                  <img src={s.url} alt={s.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <img src={s.thumb} alt={s.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </button>
               )
             })}
