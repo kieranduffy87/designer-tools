@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useId, useEffect } from 'react'
+import { useState, useRef, useCallback, useId } from 'react'
 
 // Sample images bundled as remote URLs (Unsplash). The user can also upload.
 const SAMPLES = [
@@ -117,38 +117,20 @@ export default function FractalGlass({ narrow }) {
   // Quantise noise to N steps so we get sharp banded "blinds" instead of smooth gradient
   const tableValues = discreteTable(Math.max(2, Math.min(steps, 80)))
 
-  // ── Layout (mobile first; both narrow + wide use the same stacked frame) ──
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', height: '100%', width: '100%',
-    }}>
-      {/* Header */}
-      <div style={{
-        padding: '14px 16px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-      }}>
-        <div>
-          <h2 style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.9)', margin: 0 }}>
-            Fractal <span className="display-italic">Glass</span>
-          </h2>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>Stepped column displacement</p>
-        </div>
-        <button onClick={randomize} title="Randomize" style={iconBtn}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M16 3h5v5"/><path d="M4 20l16.2-16.2"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/>
-          </svg>
-        </button>
-      </div>
-
+    <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', height: '100%', width: '100%' }}>
       {/* Canvas */}
       <div style={{
-        flex: 1, minHeight: 0, padding: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.02), transparent 70%)',
+        flex: narrow ? '0 0 auto' : 1,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: narrow ? 12 : 40,
+        minHeight: 0,
       }}>
         <div style={{
-          position: 'relative', width: '100%', height: '100%', maxWidth: 900,
-          borderRadius: 14, overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+          position: 'relative', width: '100%', maxWidth: 900,
+          aspectRatio: '4/3',
+          borderRadius: 16, overflow: 'hidden',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
           background: '#0b0b0f',
         }}>
           <svg ref={svgRef} viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice"
@@ -183,9 +165,7 @@ export default function FractalGlass({ narrow }) {
           </svg>
 
           {/* Floating action stack */}
-          <div style={{
-            position: 'absolute', top: 10, right: 10, display: 'flex', flexDirection: 'column', gap: 6,
-          }}>
+          <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label title="Upload image" style={fabBtn}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
@@ -208,68 +188,90 @@ export default function FractalGlass({ narrow }) {
         </div>
       </div>
 
-      {/* Sample picker */}
+      {/* Controls panel */}
       <div style={{
-        display: 'flex', gap: 8, padding: '8px 12px',
-        overflowX: 'auto', WebkitOverflowScrolling: 'touch',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
+        width: narrow ? '100%' : 280,
+        flex: narrow ? '1 1 auto' : '0 0 auto',
+        height: narrow ? 'auto' : '100%',
+        overflowY: 'auto',
+        background: 'rgba(255,255,255,0.02)',
+        borderLeft: narrow ? 'none' : '1px solid rgba(255,255,255,0.06)',
+        borderTop: narrow ? '1px solid rgba(255,255,255,0.06)' : 'none',
+        padding: narrow ? '14px 16px' : '24px 20px',
+        display: 'flex', flexDirection: 'column', gap: narrow ? 14 : 20,
       }}>
-        {SAMPLES.map(s => {
-          const active = !uploadedImage && sampleKey === s.key
-          return (
-            <button key={s.key} onClick={() => { setSampleKey(s.key); setUploadedImage(null) }}
-              style={{
-                flexShrink: 0, width: 56, height: 42, borderRadius: 8,
-                padding: 0, overflow: 'hidden',
-                border: `2px solid ${active ? '#0339f8' : 'rgba(255,255,255,0.08)'}`,
-                background: '#0b0b0f', cursor: 'pointer', transition: 'border-color 0.15s',
-              }}>
-              <img src={s.url} alt={s.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            </button>
-          )
-        })}
-      </div>
+        <div>
+          <h2 style={{ fontSize: 14, fontWeight: 500, marginBottom: 4, color: 'rgba(255,255,255,0.85)' }}>
+            Fractal <span className="display-italic">Glass</span>
+          </h2>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Stepped column displacement</p>
+        </div>
 
-      {/* Type toggle */}
-      <div style={{ display: 'flex', gap: 6, padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        {TYPES.map(t => {
-          const active = typeKey === t.key
-          return (
-            <button key={t.key} onClick={() => setTypeKey(t.key)} style={{
-              flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', cursor: 'pointer',
-              background: active ? 'rgba(3,57,248,0.18)' : 'rgba(255,255,255,0.04)',
-              color: active ? '#7aa4ff' : 'rgba(255,255,255,0.55)',
-              fontSize: 12, fontWeight: 500, transition: 'all 0.15s',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}>
-              {t.key === 'vertical' ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="6" y1="3" x2="6" y2="21"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="18" y1="3" x2="18" y2="21"/></svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-              )}
-              {t.label}
-            </button>
-          )
-        })}
-      </div>
+        {/* Image */}
+        <div>
+          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 8 }}>Image</label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            {SAMPLES.map(s => {
+              const active = !uploadedImage && sampleKey === s.key
+              return (
+                <button key={s.key} onClick={() => { setSampleKey(s.key); setUploadedImage(null) }} style={{
+                  width: '100%', aspectRatio: '4/3', borderRadius: 8, padding: 0, overflow: 'hidden',
+                  border: `2px solid ${active ? '#0339f8' : 'rgba(255,255,255,0.08)'}`,
+                  background: '#0b0b0f', cursor: 'pointer', transition: 'border-color 0.15s',
+                }}>
+                  <img src={s.url} alt={s.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
-      {/* Sliders */}
-      <div style={{ padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 14, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        {/* Direction */}
+        <div>
+          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 8 }}>Direction</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {TYPES.map(t => {
+              const active = typeKey === t.key
+              return (
+                <button key={t.key} onClick={() => setTypeKey(t.key)} style={{
+                  flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+                  background: active ? 'rgba(3,57,248,0.18)' : 'rgba(255,255,255,0.04)',
+                  color: active ? '#7aa4ff' : 'rgba(255,255,255,0.55)',
+                  fontSize: 11, fontWeight: 500, transition: 'all 0.15s',
+                }}>
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         <Slider label="Steps"      value={steps}      min={4}   max={80}  step={1}    onChange={setSteps} />
         <Slider label="Distortion" value={distortion} min={0}   max={300} step={1}    onChange={setDistortion} />
         <Slider label="Blur"       value={blur}       min={0}   max={8}   step={0.1}  onChange={setBlur} format={v => v.toFixed(1)} />
-      </div>
 
-      {/* Export */}
-      <div style={{ padding: '0 16px 16px' }}>
-        <button onClick={exportPNG} disabled={exporting} style={{
-          width: '100%', padding: '14px 0', borderRadius: 12, border: 'none',
-          background: exporting ? 'rgba(3,57,248,0.5)' : '#0339f8', color: '#fff',
-          fontSize: 13, fontWeight: 500, cursor: exporting ? 'wait' : 'pointer',
-          transition: 'all 0.15s',
-        }}>
-          {exporting ? 'Exporting…' : 'Export PNG (1600×1200)'}
-        </button>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button onClick={randomize} style={{
+            width: '100%', padding: '10px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)',
+            background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.8)',
+            fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+          >
+            Randomize
+          </button>
+          <button onClick={exportPNG} disabled={exporting} style={{
+            width: '100%', padding: '10px 16px', borderRadius: 10, border: 'none',
+            background: exporting ? 'rgba(3,57,248,0.5)' : '#0339f8', color: '#fff',
+            fontSize: 12, fontWeight: 500, cursor: exporting ? 'wait' : 'pointer', transition: 'all 0.15s',
+          }}
+            onMouseEnter={e => { if (!exporting) e.currentTarget.style.background = '#0250ff' }}
+            onMouseLeave={e => { if (!exporting) e.currentTarget.style.background = '#0339f8' }}
+          >
+            {exporting ? 'Exporting…' : 'Export PNG'}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -288,12 +290,6 @@ function Slider({ label, value, min, max, step, onChange, format }) {
         style={{ width: '100%' }} />
     </div>
   )
-}
-
-const iconBtn = {
-  width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)',
-  background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
 }
 
 const fabBtn = {
