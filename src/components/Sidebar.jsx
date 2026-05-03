@@ -65,33 +65,21 @@ export default function Sidebar({ tools, activeTool, setActiveTool, narrow }) {
     )
   }
 
-  // Side bar (desktop)
+  // Side bar on the FAR RIGHT (desktop)
   return (
     <aside style={{
       width: 220, height: '100vh',
       display: 'flex', flexDirection: 'column',
       background: 'rgba(255,255,255,0.02)',
-      borderRight: '1px solid rgba(255,255,255,0.06)',
+      borderLeft: '1px solid rgba(255,255,255,0.06)',
       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       flexShrink: 0, position: 'relative', zIndex: 10,
     }}>
-      <div style={{ padding: '20px 20px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <svg viewBox="0 0 18.62 11.73" style={{ width: 28, height: 18, flexShrink: 0 }}>
-          <polygon points="18.62 0 12 0 6 5.86 12 11.73 18.62 11.73 12.62 5.86 18.62 0" fill="#0339f8"/>
-          <polygon points="0 0 0 11.72 6 5.86 0 0" fill="rgba(255,255,255,0.9)"/>
-        </svg>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.85)', lineHeight: 1.2 }}>
-            Design <span className="display-italic">Toolkit</span>
-          </div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>Studio</div>
-        </div>
+      <div style={{ padding: '20px 20px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Tools</span>
       </div>
 
-      <nav style={{ padding: '12px 10px' }}>
-        <div style={{ padding: '0 12px', marginBottom: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Tools</span>
-        </div>
+      <nav style={{ padding: '10px 10px' }}>
         {tools.map(({ key, label }) => {
           const active = activeTool === key
           const Icon = TOOL_ICONS[key]
@@ -112,10 +100,6 @@ export default function Sidebar({ tools, activeTool, setActiveTool, narrow }) {
           )
         })}
       </nav>
-
-      <div style={{ marginTop: 'auto', padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>Kieran Duffy — Design Tools</div>
-      </div>
     </aside>
   )
 }

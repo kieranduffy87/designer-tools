@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
+import LogoPanel from './components/LogoPanel'
 import MeshGradient from './tools/MeshGradient'
 import FractalGlass from './tools/FractalGlass'
 import NoiseTexture from './tools/NoiseTexture'
@@ -28,6 +29,9 @@ export default function App() {
   const tool = TOOLS.find(t => t.key === activeTool)
   const ActiveComponent = tool.Component
 
+  // Layout:
+  // - Mobile: [logo header] / [main canvas] / [tool tab bar at bottom]
+  // - Desktop: [logo strip far left] [main canvas] [tool nav far right]
   return (
     <div style={{
       display: 'flex',
@@ -48,6 +52,8 @@ export default function App() {
         pointerEvents: 'none',
         zIndex: 0,
       }} />
+
+      <LogoPanel narrow={narrow} />
 
       <main style={{ flex: 1, position: 'relative', zIndex: 5, overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
         <ActiveComponent narrow={narrow} />

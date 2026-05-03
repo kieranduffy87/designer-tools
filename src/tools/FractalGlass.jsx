@@ -278,15 +278,15 @@ export default function FractalGlass({ narrow }) {
 function Slider({ label, value, min, max, step, onChange, format }) {
   const display = format ? format(value) : Math.round(value)
   return (
-    <label style={{ display: 'block' }}>
+    <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{label}</span>
-        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontVariantNumeric: 'tabular-nums' }}>{display}</span>
+        <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{label}</label>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontVariantNumeric: 'tabular-nums' }}>{display}</span>
       </div>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={e => onChange(parseFloat(e.target.value))}
-        style={{ width: '100%', accentColor: '#0339f8', height: 28 }} />
-    </label>
+        style={{ width: '100%' }} />
+    </div>
   )
 }
 
