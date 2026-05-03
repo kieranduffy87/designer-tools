@@ -3,13 +3,13 @@ import Sidebar from './components/Sidebar'
 import LogoPanel from './components/LogoPanel'
 import MeshGradient from './tools/MeshGradient'
 import FractalGlass from './tools/FractalGlass'
-import NoiseTexture from './tools/NoiseTexture'
+import HalftoneScreen from './tools/HalftoneScreen'
 import GlitchScreen from './tools/GlitchScreen'
 
 const TOOLS = [
   { key: 'mesh', label: 'Mesh Gradient', Component: MeshGradient },
   { key: 'fractal', label: 'Fractal Glass', Component: FractalGlass },
-  { key: 'noise', label: 'Noise Texture', Component: NoiseTexture },
+  { key: 'halftone', label: 'Halftone Photo', Component: HalftoneScreen },
   { key: 'glitch', label: 'Glitch Screen', Component: GlitchScreen },
 ]
 

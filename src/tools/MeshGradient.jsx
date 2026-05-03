@@ -329,7 +329,7 @@ export default function MeshGradient({ narrow }) {
   const exportPNG = useCallback(() => {
     setExporting(true)
     setTimeout(() => {
-      const EW = CW * 4, EH = CH * 4
+      const EW = 3840, EH = 2880
       // Render at 2x export res then upscale
       const rw = CW * 2, rh = CH * 2
       const imgData = new ImageData(rw, rh)
@@ -627,7 +627,7 @@ export default function MeshGradient({ narrow }) {
             onMouseEnter={e => { if (!exporting) e.currentTarget.style.background = '#0250ff' }}
             onMouseLeave={e => { if (!exporting) e.currentTarget.style.background = '#0339f8' }}
           >
-            {exporting ? 'Exporting…' : 'Export PNG (3200×2400)'}
+            {exporting ? 'Exporting…' : 'Export 4K PNG'}
           </button>
         </div>
       </div>

@@ -85,8 +85,8 @@ export default function GlitchScreen({ narrow }) {
       }
       const cloned = svg.cloneNode(true)
       cloned.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-      cloned.setAttribute('width', '2400')
-      cloned.setAttribute('height', '1800')
+      cloned.setAttribute('width', '3840')
+      cloned.setAttribute('height', '2880')
       const imgEl = cloned.querySelector('image')
       if (imgEl) imgEl.setAttribute('href', dataHref)
 
@@ -98,11 +98,11 @@ export default function GlitchScreen({ narrow }) {
       img.crossOrigin = 'anonymous'
       img.onload = () => {
         const canvas = document.createElement('canvas')
-        canvas.width = 2400; canvas.height = 1800
+        canvas.width = 3840; canvas.height = 2880
         const ctx = canvas.getContext('2d')
         ctx.imageSmoothingEnabled = true
         ctx.imageSmoothingQuality = 'high'
-        ctx.drawImage(img, 0, 0, 2400, 1800)
+        ctx.drawImage(img, 0, 0, 3840, 2880)
         canvas.toBlob(b => {
           const dl = URL.createObjectURL(b)
           const a = document.createElement('a')
@@ -308,7 +308,7 @@ export default function GlitchScreen({ narrow }) {
             onMouseEnter={e => { if (!exporting) e.currentTarget.style.background = '#0250ff' }}
             onMouseLeave={e => { if (!exporting) e.currentTarget.style.background = '#0339f8' }}
           >
-            {exporting ? 'Exporting…' : 'Export PNG'}
+            {exporting ? 'Exporting…' : 'Export 4K PNG'}
           </button>
         </div>
       </div>

@@ -12,14 +12,18 @@ const TOOL_ICONS = {
       <circle cx="12" cy="12" r="2" />
     </svg>
   ),
-  noise: () => (
+  halftone: () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="18" height="18" rx="2" />
-      <circle cx="8" cy="8" r="1" fill="currentColor" opacity="0.6" />
-      <circle cx="16" cy="10" r="1.2" fill="currentColor" opacity="0.4" />
-      <circle cx="10" cy="15" r="0.8" fill="currentColor" opacity="0.7" />
-      <circle cx="17" cy="16" r="1" fill="currentColor" opacity="0.5" />
-      <circle cx="12" cy="11" r="0.6" fill="currentColor" opacity="0.3" />
+      <circle cx="7" cy="7" r="0.6" fill="currentColor" />
+      <circle cx="12" cy="7" r="1.2" fill="currentColor" />
+      <circle cx="17" cy="7" r="2" fill="currentColor" />
+      <circle cx="7" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
+      <circle cx="17" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="7" cy="17" r="2" fill="currentColor" />
+      <circle cx="12" cy="17" r="1.2" fill="currentColor" />
+      <circle cx="17" cy="17" r="0.6" fill="currentColor" />
     </svg>
   ),
   glitch: () => (
