@@ -4,13 +4,13 @@ import LogoPanel from './components/LogoPanel'
 import MeshGradient from './tools/MeshGradient'
 import FractalGlass from './tools/FractalGlass'
 import NoiseTexture from './tools/NoiseTexture'
-import BlobMaker from './tools/BlobMaker'
+import GlitchScreen from './tools/GlitchScreen'
 
 const TOOLS = [
   { key: 'mesh', label: 'Mesh Gradient', Component: MeshGradient },
   { key: 'fractal', label: 'Fractal Glass', Component: FractalGlass },
   { key: 'noise', label: 'Noise Texture', Component: NoiseTexture },
-  { key: 'blob', label: 'Blob Maker', Component: BlobMaker },
+  { key: 'glitch', label: 'Glitch Screen', Component: GlitchScreen },
 ]
 
 export function useNarrow(breakpoint = 720) {
