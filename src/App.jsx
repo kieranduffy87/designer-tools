@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import MeshGradient from './tools/MeshGradient'
 import FractalGlass from './tools/FractalGlass'
@@ -12,13 +12,24 @@ const TOOLS = [
   { key: 'blob', label: 'Blob Maker', Component: BlobMaker },
 ]
 
+export function useNarrow(breakpoint = 720) {
+  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < breakpoint)
+  useEffect(() => {
+    const onResize = () => setNarrow(window.innerWidth < breakpoint)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [breakpoint])
+  return narrow
+}
+
 export default function App() {
   const [activeTool, setActiveTool] = useState('mesh')
+  const narrow = useNarrow()
   const tool = TOOLS.find(t => t.key === activeTool)
   const ActiveComponent = tool.Component
 
   return (
-    <div style={{ display: 'flex', height: '100dvh', minWidth: 760, width: '100vw', background: '#0b0b0f', position: 'relative' }}>
+    <div style={{ display: 'flex', height: '100dvh', width: '100vw', background: '#0b0b0f', position: 'relative' }}>
       {/* Ambient glow */}
       <div aria-hidden style={{
         position: 'fixed',
@@ -34,10 +45,10 @@ export default function App() {
         zIndex: 0,
       }} />
 
-      <Sidebar tools={TOOLS} activeTool={activeTool} setActiveTool={setActiveTool} />
+      <Sidebar tools={TOOLS} activeTool={activeTool} setActiveTool={setActiveTool} narrow={narrow} />
 
-      <main style={{ flex: 1, position: 'relative', zIndex: 5, overflow: 'hidden' }}>
-        <ActiveComponent />
+      <main style={{ flex: 1, position: 'relative', zIndex: 5, overflow: 'hidden', minWidth: 0 }}>
+        <ActiveComponent narrow={narrow} />
       </main>
     </div>
   )

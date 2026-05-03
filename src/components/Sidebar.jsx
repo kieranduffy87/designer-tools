@@ -29,10 +29,11 @@ const TOOL_ICONS = {
   ),
 }
 
-export default function Sidebar({ tools, activeTool, setActiveTool }) {
+export default function Sidebar({ tools, activeTool, setActiveTool, narrow }) {
+  const width = narrow ? 56 : 220
   return (
     <aside style={{
-      width: 220,
+      width,
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
@@ -43,33 +44,38 @@ export default function Sidebar({ tools, activeTool, setActiveTool }) {
       flexShrink: 0,
       position: 'relative',
       zIndex: 10,
+      transition: 'width 0.2s',
     }}>
       {/* Logo */}
-      <div style={{ padding: '20px 20px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding: narrow ? '20px 0 16px' : '20px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: narrow ? 'center' : 'flex-start', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <svg viewBox="0 0 18.62 11.73" style={{ width: 28, height: 18, flexShrink: 0 }}>
           <polygon points="18.62 0 12 0 6 5.86 12 11.73 18.62 11.73 12.62 5.86 18.62 0" fill="#0339f8"/>
           <polygon points="0 0 0 11.72 6 5.86 0 0" fill="rgba(255,255,255,0.9)"/>
         </svg>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.85)', lineHeight: 1.2 }}>
-            Design <span className="display-italic">Toolkit</span>
+        {!narrow && (
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.85)', lineHeight: 1.2 }}>
+              Design <span className="display-italic">Toolkit</span>
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>Studio</div>
           </div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>Studio</div>
-        </div>
+        )}
       </div>
 
       {/* Tool Nav */}
-      <nav style={{ padding: '12px 10px' }}>
-        <div style={{ padding: '0 12px', marginBottom: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Tools</span>
-        </div>
+      <nav style={{ padding: narrow ? '12px 6px' : '12px 10px' }}>
+        {!narrow && (
+          <div style={{ padding: '0 12px', marginBottom: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Tools</span>
+          </div>
+        )}
         {tools.map(({ key, label }) => {
           const active = activeTool === key
           const Icon = TOOL_ICONS[key]
           return (
-            <button key={key} onClick={() => setActiveTool(key)} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-              padding: '9px 12px', borderRadius: 10, border: 'none', cursor: 'pointer',
+            <button key={key} onClick={() => setActiveTool(key)} title={narrow ? label : undefined} style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: narrow ? 'center' : 'flex-start', gap: 10,
+              padding: narrow ? '10px 0' : '9px 12px', borderRadius: 10, border: 'none', cursor: 'pointer',
               marginBottom: 2,
               background: active ? 'rgba(255,255,255,0.07)' : 'transparent',
               color: active ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.35)',
@@ -80,21 +86,23 @@ export default function Sidebar({ tools, activeTool, setActiveTool }) {
               onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.35)' } }}
             >
               <Icon />
-              {label}
-              {active && <div style={{ marginLeft: 'auto', width: 4, height: 4, borderRadius: '50%', background: '#0339f8' }} />}
+              {!narrow && label}
+              {!narrow && active && <div style={{ marginLeft: 'auto', width: 4, height: 4, borderRadius: '50%', background: '#0339f8' }} />}
             </button>
           )
         })}
       </nav>
 
-      <div style={{ margin: '0 10px', borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+      {!narrow && <div style={{ margin: '0 10px', borderTop: '1px solid rgba(255,255,255,0.06)' }} />}
 
       {/* Footer */}
-      <div style={{ marginTop: 'auto', padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>
-          Kieran Duffy — Design Tools
+      {!narrow && (
+        <div style={{ marginTop: 'auto', padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>
+            Kieran Duffy — Design Tools
+          </div>
         </div>
-      </div>
+      )}
     </aside>
   )
 }
