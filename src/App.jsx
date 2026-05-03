@@ -29,7 +29,11 @@ export default function App() {
   const ActiveComponent = tool.Component
 
   return (
-    <div style={{ display: 'flex', height: '100dvh', width: '100vw', background: '#0b0b0f', position: 'relative' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: narrow ? 'column' : 'row',
+      height: '100dvh', width: '100vw', background: '#0b0b0f', position: 'relative',
+    }}>
       {/* Ambient glow */}
       <div aria-hidden style={{
         position: 'fixed',
@@ -45,11 +49,11 @@ export default function App() {
         zIndex: 0,
       }} />
 
-      <Sidebar tools={TOOLS} activeTool={activeTool} setActiveTool={setActiveTool} narrow={narrow} />
-
-      <main style={{ flex: 1, position: 'relative', zIndex: 5, overflow: 'hidden', minWidth: 0 }}>
+      <main style={{ flex: 1, position: 'relative', zIndex: 5, overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
         <ActiveComponent narrow={narrow} />
       </main>
+
+      <Sidebar tools={TOOLS} activeTool={activeTool} setActiveTool={setActiveTool} narrow={narrow} />
     </div>
   )
 }

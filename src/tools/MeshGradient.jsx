@@ -80,7 +80,7 @@ const HIT_PX = 18     // hit-test radius in CSS px
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function MeshGradient() {
+export default function MeshGradient({ narrow }) {
   const [palette, setPalette] = useState(PALETTES[0])
   const [rows, setRows] = useState(3)
   const [cols, setCols] = useState(3)
@@ -202,9 +202,11 @@ export default function MeshGradient() {
   // ── Coordinate helpers ────────────────────────────────────────────────────
   const getPos = useCallback((e) => {
     const r = uiRef.current.getBoundingClientRect()
+    const cx = e.touches ? e.touches[0].clientX : e.clientX
+    const cy = e.touches ? e.touches[0].clientY : e.clientY
     return {
-      x: clamp((e.clientX - r.left) / r.width),
-      y: clamp((e.clientY - r.top) / r.height),
+      x: clamp((cx - r.left) / r.width),
+      y: clamp((cy - r.top) / r.height),
     }
   }, [])
 
@@ -386,11 +388,25 @@ export default function MeshGradient() {
   )
 
   // ─────────────────────────────────────────────────────────────────────────
+  const onTouchStart = useCallback((e) => {
+    const pos = getPos(e)
+    const hit = hitTest(pos.x, pos.y)
+    if (hit) { setSelectedId(hit.id); dragRef.current = hit.id }
+    else { setSelectedId(null); dragRef.current = null }
+  }, [getPos, hitTest])
+  const onTouchMove = useCallback((e) => {
+    if (!dragRef.current) return
+    e.preventDefault()
+    const pos = getPos(e)
+    setPoints(prev => prev.map(p => p.id === dragRef.current ? { ...p, x: pos.x, y: pos.y } : p))
+  }, [getPos])
+  const onTouchEnd = useCallback(() => { dragRef.current = null }, [])
+
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', height: '100%', width: '100%' }}>
 
       {/* ── Canvas area ─────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, minWidth: 0, gap: 16 }}>
+      <div style={{ flex: narrow ? '0 0 auto' : 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: narrow ? 12 : 32, minWidth: 0, gap: narrow ? 8 : 16 }}>
         <div style={{
           position: 'relative',
           width: '100%', maxWidth: 800,
@@ -407,7 +423,7 @@ export default function MeshGradient() {
           {/* Interaction layer */}
           <canvas ref={uiRef} width={CW} height={CH} style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%',
-            borderRadius: 16, cursor, userSelect: 'none',
+            borderRadius: 16, cursor, userSelect: 'none', touchAction: 'none',
           }}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
@@ -415,9 +431,12 @@ export default function MeshGradient() {
             onMouseLeave={onMouseUp}
             onDoubleClick={onDoubleClick}
             onContextMenu={e => e.preventDefault()}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
           />
           {/* Hint */}
-          {showPoints && (
+          {showPoints && !narrow && (
             <div style={{
               position: 'absolute', bottom: 14, left: 0, right: 0, textAlign: 'center',
               fontSize: 10, color: 'rgba(255,255,255,0.18)', pointerEvents: 'none',
@@ -429,33 +448,39 @@ export default function MeshGradient() {
         </div>
 
         {/* Point count badge */}
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{
-            padding: '4px 12px', borderRadius: 999,
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-            fontSize: 11, color: 'rgba(255,255,255,0.3)',
-          }}>
-            {points.length} points · IDW power {power.toFixed(1)}
-          </div>
-          {animating && (
+        {!narrow && (
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <div style={{
               padding: '4px 12px', borderRadius: 999,
-              background: 'rgba(3,57,248,0.15)', border: '1px solid rgba(3,57,248,0.3)',
-              fontSize: 11, color: 'rgba(100,160,255,0.8)',
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              fontSize: 11, color: 'rgba(255,255,255,0.3)',
             }}>
-              Animating
+              {points.length} points · IDW power {power.toFixed(1)}
             </div>
-          )}
-        </div>
+            {animating && (
+              <div style={{
+                padding: '4px 12px', borderRadius: 999,
+                background: 'rgba(3,57,248,0.15)', border: '1px solid rgba(3,57,248,0.3)',
+                fontSize: 11, color: 'rgba(100,160,255,0.8)',
+              }}>
+                Animating
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Controls panel ──────────────────────────────────────────────── */}
       <div style={{
-        width: 260, flexShrink: 0, height: '100%', overflowY: 'auto',
+        width: narrow ? '100%' : 260, flexShrink: 0,
+        flex: narrow ? '1 1 auto' : '0 0 auto',
+        height: narrow ? 'auto' : '100%',
+        overflowY: 'auto',
         background: 'rgba(255,255,255,0.02)',
-        borderLeft: '1px solid rgba(255,255,255,0.06)',
-        padding: '24px 20px',
-        display: 'flex', flexDirection: 'column', gap: 20,
+        borderLeft: narrow ? 'none' : '1px solid rgba(255,255,255,0.06)',
+        borderTop: narrow ? '1px solid rgba(255,255,255,0.06)' : 'none',
+        padding: narrow ? '14px 16px' : '24px 20px',
+        display: 'flex', flexDirection: 'column', gap: narrow ? 14 : 20,
       }}>
 
         {/* Header */}

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 
-export default function NoiseTexture() {
+export default function NoiseTexture({ narrow }) {
   const [baseFreq, setBaseFreq] = useState(0.65)
   const [octaves, setOctaves] = useState(4)
   const [seed, setSeed] = useState(1)
@@ -50,8 +50,8 @@ export default function NoiseTexture() {
   }, [])
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+    <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', height: '100%', width: '100%' }}>
+      <div style={{ flex: narrow ? '0 0 auto' : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: narrow ? 12 : 40 }}>
         <div style={{ width: '100%', maxWidth: 800, aspectRatio: '4/3', borderRadius: 16, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
           <svg ref={svgRef} viewBox="0 0 800 600" style={{ width: '100%', height: '100%', borderRadius: 16 }}>
             <defs>
@@ -71,11 +71,15 @@ export default function NoiseTexture() {
       </div>
 
       <div style={{
-        width: 280, height: '100%', overflowY: 'auto',
+        width: narrow ? '100%' : 280,
+        flex: narrow ? '1 1 auto' : '0 0 auto',
+        height: narrow ? 'auto' : '100%',
+        overflowY: 'auto',
         background: 'rgba(255,255,255,0.02)',
-        borderLeft: '1px solid rgba(255,255,255,0.06)',
-        padding: '24px 20px',
-        display: 'flex', flexDirection: 'column', gap: 20,
+        borderLeft: narrow ? 'none' : '1px solid rgba(255,255,255,0.06)',
+        borderTop: narrow ? '1px solid rgba(255,255,255,0.06)' : 'none',
+        padding: narrow ? '14px 16px' : '24px 20px',
+        display: 'flex', flexDirection: 'column', gap: narrow ? 14 : 20,
       }}>
         <div>
           <h2 style={{ fontSize: 14, fontWeight: 500, marginBottom: 4, color: 'rgba(255,255,255,0.85)' }}>
