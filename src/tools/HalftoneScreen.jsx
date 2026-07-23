@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import ExportMenu from '../components/ExportMenu'
 
 // Sample images that look great as halftones (high contrast, strong subjects).
 const SAMPLES = [
@@ -19,9 +20,9 @@ const PRESETS = [
   { key: 'punk',  label: 'Punk',     values: { dotSize: 10, angle: 15, contrast: 1.8,  brightness: -10, colorMode: 'duotone', bgColor: '#000000', fgColor: '#00ff88', shape: 'dot',    invert: true  } },
 ]
 
-// Display-canvas resolution (square pixel) and 4K export resolution.
+// Display-canvas resolution used for the live preview. Exports render fresh at
+// the resolution chosen in the ExportMenu.
 const VIEW_W = 1600, VIEW_H = 1200
-const EXPORT_W = 3840, EXPORT_H = 2880
 
 // Luminance + per-channel "ink amount" sample functions.
 const lumInk = (r, g, b) => 1 - (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
@@ -163,7 +164,6 @@ export default function HalftoneScreen({ narrow }) {
   const [shape, setShape] = useState('dot')
   const [invert, setInvert] = useState(false)
   const [showOriginal, setShowOriginal] = useState(false)
-  const [exporting, setExporting] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const canvasRef = useRef(null)
@@ -224,30 +224,21 @@ export default function HalftoneScreen({ narrow }) {
     setShape(v.shape); setInvert(v.invert)
   }, [])
 
-  const exportPNG = useCallback(() => {
+  // Render the halftone at an arbitrary export resolution. Dot size scales with
+  // resolution so dot density stays visually identical to the preview.
+  const renderCanvas = useCallback(async (w, h) => {
     const image = imageRef.current
-    if (!image) return
-    setExporting(true)
-    // Defer so the "Exporting…" state can paint.
-    setTimeout(() => {
-      const exportCanvas = document.createElement('canvas')
-      // Scale dot size to keep visual density consistent at 4K.
-      const scale = EXPORT_W / VIEW_W
-      renderHalftone({
-        canvas: exportCanvas, image,
-        W: EXPORT_W, H: EXPORT_H,
-        dotSize: dotSize * scale,
-        angle, contrast, brightness,
-        colorMode, bgColor, fgColor, shape, invert,
-      })
-      exportCanvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url; a.download = 'halftone.png'; a.click()
-        URL.revokeObjectURL(url)
-        setExporting(false)
-      }, 'image/png')
-    }, 30)
+    if (!image) throw new Error('Image not loaded')
+    const canvas = document.createElement('canvas')
+    const scale = w / VIEW_W
+    renderHalftone({
+      canvas, image,
+      W: w, H: h,
+      dotSize: dotSize * scale,
+      angle, contrast, brightness,
+      colorMode, bgColor, fgColor, shape, invert,
+    })
+    return canvas
   }, [dotSize, angle, contrast, brightness, colorMode, bgColor, fgColor, shape, invert])
 
   return (
@@ -427,16 +418,7 @@ export default function HalftoneScreen({ narrow }) {
         </div>
 
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button onClick={exportPNG} disabled={exporting || loading} style={{
-            width: '100%', padding: '10px 16px', borderRadius: 10, border: 'none',
-            background: (exporting || loading) ? 'rgba(3,57,248,0.5)' : '#0339f8', color: '#fff',
-            fontSize: 12, fontWeight: 500, cursor: (exporting || loading) ? 'wait' : 'pointer', transition: 'all 0.15s',
-          }}
-            onMouseEnter={e => { if (!exporting && !loading) e.currentTarget.style.background = '#0250ff' }}
-            onMouseLeave={e => { if (!exporting && !loading) e.currentTarget.style.background = '#0339f8' }}
-          >
-            {exporting ? 'Exporting…' : 'Export 4K PNG'}
-          </button>
+          <ExportMenu baseName="halftone" aspect={VIEW_W / VIEW_H} renderCanvas={renderCanvas} background={bgColor} narrow={narrow} />
         </div>
       </div>
     </div>

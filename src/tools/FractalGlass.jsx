@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback, useId } from 'react'
+import ExportMenu from '../components/ExportMenu'
+import { svgStringToCanvas, toDataURL } from '../lib/exporter'
 
 // Sample images bundled as remote URLs (Unsplash). The user can also upload.
 // High-res sources so the displaced output stays sharp at large render sizes.
@@ -32,7 +34,6 @@ export default function FractalGlass({ narrow }) {
   const [distortion, setDistortion] = useState(120)
   const [blur, setBlur] = useState(0)
   const [showOriginal, setShowOriginal] = useState(false)
-  const [exporting, setExporting] = useState(false)
 
   const svgRef = useRef(null)
   const filterId = useId().replace(/:/g, '_')
@@ -69,57 +70,28 @@ export default function FractalGlass({ narrow }) {
     if (!uploadedImage) setSampleKey(s.key)
   }, [uploadedImage])
 
-  const exportPNG = useCallback(async () => {
+  // Serialise the live SVG (with its displacement filter) into a self-contained
+  // string, inlining the source image as a data URL so it rasterises untainted
+  // and the vector file stands alone. `w`/`h` set the default render size; the
+  // 1600×1200 viewBox is preserved so the filter looks identical at any scale.
+  const buildExportSVG = useCallback(async (w, h) => {
     const svg = svgRef.current
-    if (!svg) return
-    setExporting(true)
-    try {
-      // Inline the image as a dataURL so toBlob works without taint
-      let dataHref = imageHref
-      if (!dataHref.startsWith('data:')) {
-        const res = await fetch(dataHref, { mode: 'cors' })
-        const blob = await res.blob()
-        dataHref = await new Promise(r => {
-          const fr = new FileReader()
-          fr.onload = () => r(fr.result)
-          fr.readAsDataURL(blob)
-        })
-      }
-      const cloned = svg.cloneNode(true)
-      cloned.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-      cloned.setAttribute('width', '3840')
-      cloned.setAttribute('height', '2880')
-      const imgEl = cloned.querySelector('image')
-      if (imgEl) imgEl.setAttribute('href', dataHref)
-
-      const serialized = new XMLSerializer().serializeToString(cloned)
-      const svgBlob = new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' })
-      const url = URL.createObjectURL(svgBlob)
-
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        canvas.width = 3840; canvas.height = 2880
-        const ctx = canvas.getContext('2d')
-        ctx.imageSmoothingEnabled = true
-        ctx.imageSmoothingQuality = 'high'
-        ctx.drawImage(img, 0, 0, 3840, 2880)
-        canvas.toBlob(b => {
-          const dl = URL.createObjectURL(b)
-          const a = document.createElement('a')
-          a.href = dl; a.download = 'fractal-glass.png'; a.click()
-          URL.revokeObjectURL(dl)
-          URL.revokeObjectURL(url)
-          setExporting(false)
-        }, 'image/png')
-      }
-      img.onerror = () => { URL.revokeObjectURL(url); setExporting(false) }
-      img.src = url
-    } catch {
-      setExporting(false)
-    }
+    if (!svg) throw new Error('SVG not ready')
+    const dataHref = await toDataURL(imageHref)
+    const cloned = svg.cloneNode(true)
+    cloned.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    cloned.setAttribute('width', String(w))
+    cloned.setAttribute('height', String(h))
+    cloned.querySelectorAll('image').forEach(el => el.setAttribute('href', dataHref))
+    return new XMLSerializer().serializeToString(cloned)
   }, [imageHref])
+
+  const renderCanvas = useCallback(async (w, h) => {
+    const svgString = await buildExportSVG(w, h)
+    return await svgStringToCanvas(svgString, w, h, '#0b0b0f')
+  }, [buildExportSVG])
+
+  const getSVGString = useCallback(() => buildExportSVG(1600, 1200), [buildExportSVG])
 
   // Quantise noise to N steps so we get sharp banded "blinds" instead of smooth gradient
   const tableValues = discreteTable(Math.max(2, Math.min(steps, 80)))
@@ -270,16 +242,7 @@ export default function FractalGlass({ narrow }) {
           >
             Randomize
           </button>
-          <button onClick={exportPNG} disabled={exporting} style={{
-            width: '100%', padding: '10px 16px', borderRadius: 10, border: 'none',
-            background: exporting ? 'rgba(3,57,248,0.5)' : '#0339f8', color: '#fff',
-            fontSize: 12, fontWeight: 500, cursor: exporting ? 'wait' : 'pointer', transition: 'all 0.15s',
-          }}
-            onMouseEnter={e => { if (!exporting) e.currentTarget.style.background = '#0250ff' }}
-            onMouseLeave={e => { if (!exporting) e.currentTarget.style.background = '#0339f8' }}
-          >
-            {exporting ? 'Exporting…' : 'Export 4K PNG'}
-          </button>
+          <ExportMenu baseName="fractal-glass" aspect={1600 / 1200} renderCanvas={renderCanvas} getSVGString={getSVGString} background="#0b0b0f" narrow={narrow} />
         </div>
       </div>
     </div>

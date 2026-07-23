@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import ExportMenu from '../components/ExportMenu'
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
 
@@ -91,7 +92,6 @@ export default function MeshGradient({ narrow }) {
   const [showPoints, setShowPoints] = useState(true)
   const [animating, setAnimating] = useState(false)
   const [cursor, setCursor] = useState('crosshair')
-  const [exporting, setExporting] = useState(false)
 
   const meshRef = useRef(null)
   const uiRef = useRef(null)
@@ -326,33 +326,41 @@ export default function MeshGradient({ narrow }) {
     })))
   }, [])
 
-  const exportPNG = useCallback(() => {
-    setExporting(true)
-    setTimeout(() => {
-      const EW = 3840, EH = 2880
-      // Render at 2x export res then upscale
-      const rw = CW * 2, rh = CH * 2
-      const imgData = new ImageData(rw, rh)
-      renderIDW(imgData, rw, rh, points, power)
-      const src = new OffscreenCanvas(rw, rh)
-      src.getContext('2d').putImageData(imgData, 0, 0)
+  // Render the gradient (plus film grain) at an arbitrary export resolution.
+  // The smooth IDW field is computed at 2×CW and upscaled — indistinguishable
+  // from a full-res solve but far cheaper — while grain is generated at the
+  // final resolution so it stays crisp.
+  const renderCanvas = useCallback(async (w, h) => {
+    const rw = CW * 2, rh = CH * 2
+    const imgData = new ImageData(rw, rh)
+    renderIDW(imgData, rw, rh, points, power)
+    const src = new OffscreenCanvas(rw, rh)
+    src.getContext('2d').putImageData(imgData, 0, 0)
 
-      const canvas = document.createElement('canvas')
-      canvas.width = EW; canvas.height = EH
-      const ctx = canvas.getContext('2d')
-      ctx.imageSmoothingEnabled = true
-      ctx.imageSmoothingQuality = 'high'
-      ctx.drawImage(src, 0, 0, EW, EH)
+    const canvas = document.createElement('canvas')
+    canvas.width = w; canvas.height = h
+    const ctx = canvas.getContext('2d')
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(src, 0, 0, w, h)
 
-      canvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url; a.download = 'mesh-gradient.png'; a.click()
-        URL.revokeObjectURL(url)
-        setExporting(false)
-      }, 'image/png')
-    }, 50)
-  }, [points, power])
+    if (grain > 0.01) {
+      const gd = ctx.createImageData(w, h)
+      const ga = (grain * 80) | 0
+      for (let i = 0; i < gd.data.length; i += 4) {
+        const v = ((Math.random() * 2 - 1) * 255) | 0
+        gd.data[i] = gd.data[i + 1] = gd.data[i + 2] = 128 + v
+        gd.data[i + 3] = ga
+      }
+      const gt = new OffscreenCanvas(w, h)
+      gt.getContext('2d').putImageData(gd, 0, 0)
+      ctx.save()
+      ctx.globalCompositeOperation = 'overlay'
+      ctx.drawImage(gt, 0, 0)
+      ctx.restore()
+    }
+    return canvas
+  }, [points, power, grain])
 
   // ── Buttons helper ────────────────────────────────────────────────────────
   const Btn = ({ onClick, children, primary, small, danger }) => (
@@ -364,7 +372,6 @@ export default function MeshGradient({ narrow }) {
       color: danger ? 'rgba(255,120,120,0.9)' : '#fff',
       fontSize: 12, fontWeight: primary ? 500 : 400, cursor: 'pointer',
       transition: 'all 0.15s',
-      opacity: exporting && primary ? 0.7 : 1,
     }}
       onMouseEnter={e => { e.currentTarget.style.background = danger ? 'rgba(255,60,60,0.15)' : primary ? '#0250ff' : 'rgba(255,255,255,0.1)' }}
       onMouseLeave={e => { e.currentTarget.style.background = danger ? 'rgba(255,60,60,0.08)' : primary ? '#0339f8' : 'rgba(255,255,255,0.05)' }}
@@ -618,17 +625,7 @@ export default function MeshGradient({ narrow }) {
               onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
             >Warp</button>
           </div>
-          <button onClick={exportPNG} disabled={exporting} style={{
-            width: '100%', padding: '10px 0', borderRadius: 10, border: 'none',
-            background: exporting ? 'rgba(3,57,248,0.5)' : '#0339f8', color: '#fff',
-            fontSize: 12, fontWeight: 500, cursor: exporting ? 'wait' : 'pointer',
-            transition: 'all 0.15s',
-          }}
-            onMouseEnter={e => { if (!exporting) e.currentTarget.style.background = '#0250ff' }}
-            onMouseLeave={e => { if (!exporting) e.currentTarget.style.background = '#0339f8' }}
-          >
-            {exporting ? 'Exporting…' : 'Export 4K PNG'}
-          </button>
+          <ExportMenu baseName="mesh-gradient" aspect={CW / CH} renderCanvas={renderCanvas} background="#0b0b0f" narrow={narrow} />
         </div>
       </div>
     </div>
